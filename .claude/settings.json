@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Read(//c/Users/artun/.claude/projects/c--Users-artun-OneDrive-Masa-st--alctrading-alctrading-website/memory/**)"
+    ]
+  }
+}
