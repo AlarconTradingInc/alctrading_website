@@ -93,7 +93,7 @@ export const product = defineType({
             rows: 4,
             group: 'identity',
             description: 'Concise product description. Shown in the hero section and used as the meta description base.',
-            validation: (Rule) => Rule.max(500),
+            validation: (Rule) => Rule.max(1000),
         }),
 
         // ─── SPECIFICATIONS ──────────────────────────────────────────────────
