@@ -129,11 +129,13 @@ const PRODUCT_BY_SLUG_QUERY = `
     }
 `;
 
-/** All active products (used for generateStaticParams). */
+/** All active products (used for generateStaticParams and sitemap). */
 const ALL_PRODUCTS_SLUGS_QUERY = `
     *[_type == "product" && isDeleted != true] {
         "slug": slug.current,
-        "categorySlug": category->slug.current
+        "categorySlug": category->slug.current,
+        nsn,
+        searchKeywords
     }
 `;
 
@@ -172,7 +174,7 @@ export const getProductBySlugFromSanity = cache(
 );
 
 export const getAllProductSlugs = cache(
-    async (): Promise<Array<{ slug: string; categorySlug: string }>> => {
+    async (): Promise<Array<{ slug: string; categorySlug: string; nsn?: string; searchKeywords?: string[] }>> => {
         const client = getClient();
         if (!client) return [];
         return client.fetch(ALL_PRODUCTS_SLUGS_QUERY, {}, { next: { revalidate: 60 } });

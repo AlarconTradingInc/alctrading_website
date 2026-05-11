@@ -54,7 +54,14 @@ export const product = defineType({
                         .replace(/--+/g, '-')
                         .replace(/^-+|-+$/g, ''),
             },
-            validation: (Rule) => Rule.required().error('Slug is required.'),
+            validation: (Rule) =>
+                Rule.required()
+                    .custom((slug) => {
+                        if (!slug?.current) return 'Slug is required.';
+                        if (/[/\\]/.test(slug.current)) return 'Slug must not contain slashes. Use hyphens instead (e.g. m28840-16ad1s1).';
+                        if (/[A-Z]/.test(slug.current)) return 'Slug must be lowercase.';
+                        return true;
+                    }),
         }),
 
         defineField({

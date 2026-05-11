@@ -2,41 +2,23 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ALL_PRODUCTS, getProductBySlug, sanityProductToDetailed } from '@/lib/data';
-// getProductBySlug is used inside resolveProduct as the static fallback
+import { sanityProductToDetailed } from '@/lib/data';
 import { getAllProductSlugs, getProductBySlugFromSanity } from '@/lib/sanity';
 
-// ─── Helper: resolve a product from Sanity first, static data as fallback ────
 async function resolveProduct(category: string, slug: string) {
-    try {
-        const sanityProduct = await getProductBySlugFromSanity(category, slug);
-        if (sanityProduct) return sanityProductToDetailed(sanityProduct);
-    } catch {
-        // Sanity unavailable or not configured — fall through to static data
-    }
-    return getProductBySlug(category, slug);
+    const sanityProduct = await getProductBySlugFromSanity(category, slug);
+    if (sanityProduct) return sanityProductToDetailed(sanityProduct);
+    return undefined;
 }
 
-// 1. Generate Static Params — merge Sanity slugs + static fallback
+// 1. Generate Static Params — Sanity only
 export async function generateStaticParams() {
-    let sanityParams: Array<{ category: string; slug: string }> = [];
     try {
         const slugs = await getAllProductSlugs();
-        sanityParams = slugs.map(({ categorySlug, slug }) => ({ category: categorySlug, slug }));
+        return slugs.map(({ categorySlug, slug }) => ({ category: categorySlug, slug }));
     } catch {
-        // Sanity not yet configured — use static data
+        return [];
     }
-
-    const staticParams = ALL_PRODUCTS.map((p) => ({ category: p.categorySlug, slug: p.id }));
-
-    // Deduplicate by "category|slug" key
-    const seen = new Set<string>();
-    return [...sanityParams, ...staticParams].filter(({ category, slug }) => {
-        const key = `${category}|${slug}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-    });
 }
 
 type Props = {
