@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { sanityProductToDetailed } from '@/lib/data';
 import { getAllProductSlugs, getProductBySlugFromSanity } from '@/lib/sanity';
+import { hasDetailPage } from '@/lib/product-details';
 
 async function resolveProduct(category: string, slug: string) {
     const sanityProduct = await getProductBySlugFromSanity(category, slug);
@@ -396,11 +397,19 @@ export default async function ProductPage({ params }: Props) {
                         </div>
 
                         {/* CTA */}
-                        <div className="mt-12 bg-slate-50 p-8 border border-slate-200 flex flex-col items-start gap-6">
+                        <div className="mt-12 bg-slate-50 p-8 border border-slate-200 flex flex-col items-start gap-4">
                             <p className="font-bold text-slate-700 uppercase tracking-wider text-sm">Ready to place an order or need a quote?</p>
                             <Link href="/#contact" className="inline-block bg-gradient-to-b from-brand-light to-brand-primary text-white font-bold px-8 py-4 uppercase tracking-widest text-sm hover:from-white hover:to-white hover:text-brand-primary transition-colors shadow-lg w-full text-center">
                                 Request a Quote
                             </Link>
+                            {hasDetailPage(product.id) && (
+                                <Link
+                                    href={`/products/${product.categorySlug}/${product.id}/details`}
+                                    className="inline-block bg-gradient-to-b from-brand-light to-brand-primary text-white font-bold px-8 py-4 uppercase tracking-widest text-sm hover:from-white hover:to-white hover:text-brand-primary transition-colors shadow-lg w-full text-center"
+                                >
+                                    Product Details
+                                </Link>
+                            )}
                         </div>
                     </div>
 
