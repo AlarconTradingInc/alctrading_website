@@ -53,6 +53,7 @@ export type SanityProduct = {
     manufacturer?: string;
     partNumber?: string;
     nsn?: string;
+    natoCode?: string;
     materialSpec?: string;
     sizeWeight?: string;
     qty?: number;
@@ -92,6 +93,7 @@ const PRODUCTS_BY_CATEGORY_QUERY = `
         manufacturer,
         partNumber,
         nsn,
+        natoCode,
         materialSpec,
         sizeWeight,
         qty,
@@ -119,6 +121,7 @@ const PRODUCT_BY_SLUG_QUERY = `
         manufacturer,
         partNumber,
         nsn,
+        natoCode,
         materialSpec,
         sizeWeight,
         qty,

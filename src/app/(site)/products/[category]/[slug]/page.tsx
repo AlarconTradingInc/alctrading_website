@@ -52,11 +52,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         product.categoryTitle,
         product.subCategory || '',
         product.nsn || '',
-        product.nsn ? product.nsn.replace(/-/g, '') : '', // dashless NSN
+        product.nsn ? product.nsn.replace(/-/g, '') : '',
         product.partNumber || '',
-        product.partNumber ? product.partNumber.replace(/-/g, '') : '', // dashless part number
+        product.partNumber ? product.partNumber.replace(/-/g, '') : '',
         product.brand,
         product.manufacturer || '',
+        ...(product.natoCode ? [product.natoCode, `NATO ${product.natoCode}`, `NATO Code ${product.natoCode}`, product.natoCode.replace(/-/g, '')] : []),
         "Military Supplies",
         "ALC Trading",
         ...(product.searchKeywords || []),
@@ -72,6 +73,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
     if (product.partNumber && !metaDescription.includes(product.partNumber)) {
         metaDescription += ` Part Number: ${product.partNumber}.`;
+    }
+    if (product.natoCode) {
+        metaDescription += ` NATO Code: ${product.natoCode}.`;
     }
     metaDescription += ' Available from ALC Trading.';
 
@@ -308,6 +312,12 @@ export default async function ProductPage({ params }: Props) {
                             <p className="text-lg text-slate-200 font-mono break-all">
                                 NSN: {product.nsn}
                                 <span className="sr-only"> {product.nsn.replace(/-/g, '')}</span>
+                            </p>
+                        )}
+                        {product.natoCode && (
+                            <p className="text-lg text-slate-200 font-mono">
+                                NATO Code: {product.natoCode}
+                                <span className="sr-only"> NATO {product.natoCode} {product.natoCode.replace(/-/g, '')}</span>
                             </p>
                         )}
                     </div>

@@ -94,6 +94,15 @@ export const product = defineType({
         }),
 
         defineField({
+            name: 'natoCode',
+            title: 'NATO Code',
+            type: 'string',
+            group: 'identity',
+            description: 'NATO stock/supply code for this product (e.g. "O-158", "H-544"). Displayed in the product header and used in SEO keywords.',
+            validation: (Rule) => Rule.max(20),
+        }),
+
+        defineField({
             name: 'description',
             title: 'Short Description',
             type: 'text',

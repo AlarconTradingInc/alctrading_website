@@ -15,6 +15,7 @@ export type ProductDetailed = ProductBase & {
     qty?: number;
     partNumber?: string;
     nsn?: string;
+    natoCode?: string;
     manufacturer?: string;
     searchKeywords?: string[]; // Alternative search terms (dashless part numbers, NSN variants, etc.)
     longDescription?: string; // SEO-rich expanded description for dedicated product pages
@@ -257,6 +258,7 @@ export function sanityProductToDetailed(p: SanityProduct): ProductDetailed {
         manufacturer:  p.manufacturer,
         partNumber:    p.partNumber,
         nsn:           p.nsn,
+        natoCode:      p.natoCode,
         materialSpec:  p.materialSpec,
         sizeWeight:    p.sizeWeight,
         qty:           p.qty,
