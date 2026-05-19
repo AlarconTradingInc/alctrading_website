@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { sanityProductToDetailed } from '@/lib/data';
 import { getProductBySlugFromSanity } from '@/lib/sanity';
-import { PRODUCT_DETAIL_PAGES } from '@/lib/product-details';
+import { PRODUCT_DETAIL_PAGES, PRODUCT_DETAIL_SLUGS } from '@/lib/product-details';
 
 type Props = {
     params: Promise<{ category: string; slug: string }>;
@@ -15,31 +15,82 @@ async function resolveProduct(category: string, slug: string) {
     return undefined;
 }
 
+export async function generateStaticParams() {
+    return PRODUCT_DETAIL_SLUGS.map(({ categorySlug, slug }) => ({
+        category: categorySlug,
+        slug,
+    }));
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { category, slug } = await params;
     const detail = PRODUCT_DETAIL_PAGES[slug];
     if (!detail) return {};
 
-    const product = await resolveProduct(category, slug);
+    const cleanOverview = detail.overview.replace(/\n+/g, ' ');
+    const description = `${cleanOverview} Available from ALC Trading (Alarcon Trading Inc.).`.slice(0, 160);
+
+    const keywords: string[] = [
+        detail.militarySpec,
+        detail.militarySpec.replace(/-/g, ''),          // dashless: MILPRF46000
+        detail.title,
+        detail.subtitle,
+        ...(detail.natoCode ? [
+            detail.natoCode,                            // e.g. O-158
+            `NATO ${detail.natoCode}`,                  // e.g. NATO O-158
+            `NATO Code ${detail.natoCode}`,
+            detail.natoCode.replace(/-/g, ''),          // dashless: O158
+        ] : []),
+        'Military Specification',
+        'Military Lubricant',
+        'Military Hydraulic Fluid',
+        'ALC Trading',
+        'Alarcon Trading Inc.',
+        'Military Supplies',
+        'Defense Supplies',
+        ...(detail.compatibleSystems ?? []),
+    ].filter(Boolean);
+
     const pageTitle = `${detail.title} – ${detail.subtitle} | ALC Trading`;
-    const description = detail.overview.slice(0, 160);
+    const pageUrl = `/products/${category}/${slug}/details`;
 
     return {
         title: pageTitle,
         description,
+        keywords: [...new Set(keywords)],
         openGraph: {
             title: pageTitle,
             description,
-            url: `/products/${category}/${slug}/details`,
-            images: [{ url: 'https://alctrading.com/logomain_transparent.png', width: 800, height: 270, alt: `${detail.title} - ALC Trading` }],
+            url: pageUrl,
+            images: [{
+                url: 'https://alctrading.com/logomain_transparent.png',
+                width: 800,
+                height: 270,
+                alt: `${detail.title} - ALC Trading`,
+            }],
             siteName: 'ALC Trading',
             locale: 'en_US',
             type: 'website',
         },
-        alternates: {
-            canonical: `/products/${category}/${slug}/details`,
+        twitter: {
+            card: 'summary_large_image',
+            title: pageTitle,
+            description,
         },
-        robots: { index: true, follow: true },
+        alternates: {
+            canonical: pageUrl,
+        },
+        robots: {
+            index: true,
+            follow: true,
+            googleBot: {
+                index: true,
+                follow: true,
+                'max-video-preview': -1,
+                'max-image-preview': 'large' as const,
+                'max-snippet': -1,
+            },
+        },
     };
 }
 
@@ -53,25 +104,123 @@ export default async function ProductDetailsPage({ params }: Props) {
     const productName = product?.name ?? detail.title;
     const categoryTitle = product?.categoryTitle ?? category;
 
-    const structuredData = {
+    // ── Structured Data ────────────────────────────────────────────────────────
+
+    const productSchema = {
         '@context': 'https://schema.org/',
         '@type': 'Product',
         name: detail.title,
-        description: detail.overview,
+        description: detail.overview.replace(/\n+/g, ' '),
+        image: 'https://alctrading.com/logomain_transparent.png',
+        sku: detail.militarySpec,
+        mpn: detail.militarySpec,
         brand: { '@type': 'Brand', name: 'ALC Trading' },
+        manufacturer: { '@type': 'Organization', name: 'Alarcon Trading Inc.' },
         category: categoryTitle,
+        keywords: [detail.militarySpec, ...(detail.compatibleSystems ?? [])].join(', '),
+        additionalProperty: [
+            {
+                '@type': 'PropertyValue',
+                propertyID: 'MilitarySpec',
+                name: 'Military Specification',
+                value: detail.militarySpec,
+            },
+            {
+                '@type': 'PropertyValue',
+                propertyID: 'MilitarySpec_NODASH',
+                name: 'Military Specification (no dashes)',
+                value: detail.militarySpec.replace(/-/g, ''),
+            },
+            ...(detail.natoCode ? [
+                {
+                    '@type': 'PropertyValue',
+                    propertyID: 'NATOCode',
+                    name: 'NATO Code',
+                    value: detail.natoCode,
+                },
+                {
+                    '@type': 'PropertyValue',
+                    propertyID: 'NATOCode_NODASH',
+                    name: 'NATO Code (no dashes)',
+                    value: detail.natoCode.replace(/-/g, ''),
+                },
+            ] : []),
+        ],
         offers: {
             '@type': 'Offer',
             url: `https://alctrading.com/products/${category}/${slug}/details`,
             priceCurrency: 'USD',
             availability: 'https://schema.org/InStock',
+            itemCondition: 'https://schema.org/NewCondition',
             seller: { '@type': 'Organization', name: 'Alarcon Trading Inc.' },
         },
     };
 
+    const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alctrading.com/' },
+            { '@type': 'ListItem', position: 2, name: categoryTitle, item: `https://alctrading.com/products/${category}` },
+            { '@type': 'ListItem', position: 3, name: productName, item: `https://alctrading.com/products/${category}/${slug}` },
+            { '@type': 'ListItem', position: 4, name: 'Product Details', item: `https://alctrading.com/products/${category}/${slug}/details` },
+        ],
+    };
+
+    const faqSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: [
+            {
+                '@type': 'Question',
+                name: `What is ${detail.militarySpec}?`,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: detail.overview.replace(/\n+/g, ' '),
+                },
+            },
+            {
+                '@type': 'Question',
+                name: `What are the advantages of ${detail.militarySpec}?`,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: detail.advantages.join('. ') + '.',
+                },
+            },
+            {
+                '@type': 'Question',
+                name: `What is ${detail.militarySpec} used for?`,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: detail.application,
+                },
+            },
+            ...(detail.compatibleSystems && detail.compatibleSystems.length > 0 ? [{
+                '@type': 'Question',
+                name: `What equipment is ${detail.militarySpec} compatible with?`,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: `${detail.militarySpec} is compatible with the following systems: ${detail.compatibleSystems.join(', ')}.`,
+                },
+            }] : []),
+            {
+                '@type': 'Question',
+                name: `Where can I buy ${detail.militarySpec}?`,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: `${detail.militarySpec} is available from ALC Trading (Alarcon Trading Inc.), a U.S.-based military and defense supplier. Contact us for current pricing, availability, and documentation.`,
+                },
+            },
+        ],
+    };
+
+    const schemas = [productSchema, breadcrumbSchema, faqSchema];
+
+    // ── Render ─────────────────────────────────────────────────────────────────
+
     return (
         <div className="bg-white text-slate-900 min-h-screen">
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
 
             {/* Breadcrumb */}
             <div className="bg-slate-50 border-b border-slate-200 py-4">
@@ -99,7 +248,7 @@ export default async function ProductDetailsPage({ params }: Props) {
                         <p className="text-xl text-slate-200 font-light mt-1">{detail.subtitle}</p>
                     </div>
                     <div className="w-16 h-1 bg-white/50 mb-6" />
-                    <p className="text-lg text-slate-200 max-w-3xl font-light leading-relaxed">
+                    <p className="text-lg text-slate-200 max-w-3xl font-light leading-relaxed whitespace-pre-line">
                         {detail.overview}
                     </p>
                     <div className="mt-8">
@@ -126,6 +275,15 @@ export default async function ProductDetailsPage({ params }: Props) {
                             <span className="sm:w-1/4 font-bold font-mono text-slate-900 text-sm">Specification</span>
                             <span className="sm:w-3/4 font-bold font-mono text-slate-900 text-sm">{detail.militarySpec}</span>
                         </div>
+                        {detail.natoCode && (
+                            <div className="flex flex-col sm:flex-row py-4 border-b border-slate-200">
+                                <span className="sm:w-1/4 font-bold font-mono text-slate-900 text-sm">NATO Code</span>
+                                <span className="sm:w-3/4 font-bold font-mono text-slate-900 text-sm">
+                                    {detail.natoCode}
+                                    <span className="sr-only"> NATO {detail.natoCode} {detail.natoCode.replace(/-/g, '')}</span>
+                                </span>
+                            </div>
+                        )}
                     </div>
                     <div className="mt-8">
                         <h3 className="text-lg font-bold uppercase tracking-wide text-slate-800 mb-3">Composition</h3>
@@ -155,7 +313,18 @@ export default async function ProductDetailsPage({ params }: Props) {
                     </h2>
                     <p className="text-slate-700 leading-relaxed text-lg mb-8">{detail.application}</p>
 
-                    
+                    {detail.compatibleSystems && detail.compatibleSystems.length > 0 && (
+                        <div>
+                            <h3 className="text-lg font-bold uppercase tracking-wide text-slate-800 mb-4">Compatible Systems</h3>
+                            <div className="flex flex-wrap gap-3">
+                                {detail.compatibleSystems.map((sys) => (
+                                    <span key={sys} className="bg-slate-100 border border-slate-200 px-4 py-2 font-mono font-bold text-slate-800 text-sm uppercase tracking-wider">
+                                        {sys}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </section>
 
                 {/* Additional Sections */}
@@ -174,6 +343,15 @@ export default async function ProductDetailsPage({ params }: Props) {
                         </div>
                     </section>
                 )}
+
+                {/* Hidden keyword block for search engines */}
+                <div className="sr-only">
+                    <p>{detail.militarySpec} {detail.militarySpec.replace(/-/g, '')} {detail.title} {detail.subtitle} military specification defense supplier ALC Trading Alarcon Trading</p>
+                    {detail.natoCode && (
+                        <p>NATO Code {detail.natoCode} NATO {detail.natoCode} {detail.natoCode.replace(/-/g, '')}</p>
+                    )}
+                    {detail.compatibleSystems && <p>Compatible with: {detail.compatibleSystems.join(', ')}</p>}
+                </div>
 
                 {/* CTA */}
                 <section className="bg-slate-50 border border-slate-200 p-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">

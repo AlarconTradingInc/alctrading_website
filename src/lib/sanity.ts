@@ -135,7 +135,8 @@ const ALL_PRODUCTS_SLUGS_QUERY = `
         "slug": slug.current,
         "categorySlug": category->slug.current,
         nsn,
-        searchKeywords
+        searchKeywords,
+        _updatedAt
     }
 `;
 
@@ -174,7 +175,7 @@ export const getProductBySlugFromSanity = cache(
 );
 
 export const getAllProductSlugs = cache(
-    async (): Promise<Array<{ slug: string; categorySlug: string; nsn?: string; searchKeywords?: string[] }>> => {
+    async (): Promise<Array<{ slug: string; categorySlug: string; nsn?: string; searchKeywords?: string[]; _updatedAt?: string }>> => {
         const client = getClient();
         if (!client) return [];
         return client.fetch(ALL_PRODUCTS_SLUGS_QUERY, {}, { next: { revalidate: 60 } });
