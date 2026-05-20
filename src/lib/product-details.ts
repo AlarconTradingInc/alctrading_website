@@ -89,7 +89,7 @@ export const PRODUCT_DETAIL_PAGES: Record<string, ProductDetailContent> = {
             {
                 heading: 'Packaging & Labeling Options',
                 content:
-                    'ALC Trading (Alarcon Trading Inc.) supplies MIL-PRF-46170 to U.S. government agencies, prime contractors, and allied defense programs. Contact us for current lead times.\n\nCustomized language labeling available. Custom/customized sizes and options are available.\n\nAvailable packing sizes:\nNSN: 9150-01-332-7819  —  Type I  - 1 pt can\nNSN: 9150-00-111-6256  —  Type I  - 1 qt can\nNSN: 9150-00-111-6254  —  Type I  - 1 gal can\nNSN: 9150-00-111-6255  —  Type I  - 5 gal can\nNSN: 9150-01-158-0462  —  Type I  - 55 gal drum',
+                    'ALC Trading (Alarcon Trading Inc.) supplies MIL-PRF-46170 to U.S. government agencies, prime contractors, and allied defense programs. Contact us for current lead times.\n\nCustomized language labeling available. Custom/customized sizes and options are available.\n\nAvailable packing sizes:\nNSN: 9150-01-332-7819    Type I  - 1 pt can\nNSN: 9150-00-111-6256    Type I  - 1 qt can\nNSN: 9150-00-111-6254    Type I  - 1 gal can\nNSN: 9150-00-111-6255    Type I  - 5 gal can\nNSN: 9150-01-158-0462    Type I  - 55 gal drum',
             },
         ],
     },
